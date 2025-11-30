@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MTG Deck Builder — Untap List with Live List</title>
+<title>MTG Deck Builder — Deck + Untap List</title>
 <style>
 body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:14px;background:#f6f7f8;color:#111}
 header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
@@ -15,13 +15,13 @@ button.alt{background:#444}
 .layout{display:flex;gap:16px;align-items:flex-start}
 .col{background:#fff;border:1px solid #e2e4e6;padding:12px;border-radius:10px}
 .left{flex:1;min-width:360px}
-.right{width:380px}
+.right{width:400px}
 #results{max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-top:6px}
 .result{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;border:1px solid #eee;background:#fff}
 .thumb{width:48px;height:70px;background:#f2f3f4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999}
 .meta{flex:1}
 .meta small{display:block;color:#666;margin-top:4px}
-.deck-list{max-height:30vh;overflow:auto;margin-top:6px}
+.deck-list{max-height:25vh;overflow:auto;margin-top:6px}
 .deck-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-radius:6px;border-bottom:1px dashed #eee}
 .count{background:#eee;padding:6px 8px;border-radius:6px;font-weight:700}
 .preview{margin-top:12px;text-align:center}
@@ -38,8 +38,8 @@ label.checkbox{display:flex;gap:6px;align-items:center}
 <body>
 <header>
   <div>
-    <h1>MTG Deck Builder — Untap List</h1>
-    <div class="muted">Advanced Filters and live plain list below your deck.</div>
+    <h1>MTG Deck Builder — Deck + Untap List</h1>
+    <div class="muted">Keep your deck list and plain Untap-style list separate.</div>
   </div>
 </header>
 
@@ -116,8 +116,11 @@ label.checkbox{display:flex;gap:6px;align-items:center}
 <aside class="col right">
   <div>
     <strong>Your Deck</strong>
-    <div class="muted">Plain Untap-style list below, updates live</div>
+    <div class="muted">Deck display with card counts</div>
     <div id="deckArea" class="deck-list" aria-live="polite"></div>
+
+    <strong style="margin-top:12px; display:block;">Untap-style List</strong>
+    <div class="muted">Plain list suitable for import/export</div>
     <textarea id="deckText" placeholder="Your deck list will appear here..."></textarea>
     <div style="display:flex;gap:8px;margin-top:6px">
       <button id="exportBtn">Export List</button>
@@ -128,56 +131,43 @@ label.checkbox{display:flex;gap:6px;align-items:center}
 </div>
 
 <script>
-let deckMap = {}; 
-let lastPage = 1;
+let deckMap={};
+let lastPage=1;
 
-// Scryfall fetch
-async function fetchCards(query, page=1){
-  const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&page=${page}`;
-  const res = await fetch(url);
+// Fetch cards
+async function fetchCards(query,page=1){
+  const res=await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&page=${page}`);
   return res.json();
 }
 
 // Filters
 function gatherFilters(){
-  const sups = Array.from(document.querySelectorAll('.suptype:checked')).map(i=>i.value);
-  const type = document.getElementById('typeSelect').value;
-  const subtype = document.getElementById('subtypeInput').value.trim();
-  const colors = Array.from(document.querySelectorAll('.colorChk:checked')).map(c=>c.value);
-  const format = document.getElementById('formatSelect').value;
-  return { supertypes: sups, type, subtype, colors, format };
+  return {
+    supertypes:Array.from(document.querySelectorAll('.suptype:checked')).map(i=>i.value),
+    type:document.getElementById('typeSelect').value,
+    subtype:document.getElementById('subtypeInput').value.trim(),
+    colors:Array.from(document.querySelectorAll('.colorChk:checked')).map(c=>c.value),
+    format:document.getElementById('formatSelect').value
+  };
 }
 
-function cardMatchesFilters(card, filters){
-  if(filters.supertypes.length){
-    const typeLine = card.type_line?.toLowerCase()||'';
-    if(!filters.supertypes.every(s=>typeLine.includes(s.toLowerCase()))) return false;
-  }
-  if(filters.type){
-    if(!(card.type_line?.toLowerCase()||'').includes(filters.type.toLowerCase())) return false;
-  }
-  if(filters.subtype){
-    const subs = (card.type_line?.split('—')[1]||'').toLowerCase();
-    if(!subs.includes(filters.subtype.toLowerCase())) return false;
-  }
-  if(filters.colors.length){
-    if(!filters.colors.every(c=> (card.colors||[]).includes(c))) return false;
-  }
-  if(filters.format){
-    if(card.legalities?.[filters.format]!=='legal') return false;
-  }
+function cardMatchesFilters(card,f){
+  if(f.supertypes.length&&!f.supertypes.every(s=>(card.type_line||'').toLowerCase().includes(s.toLowerCase()))) return false;
+  if(f.type&&!(card.type_line||'').toLowerCase().includes(f.type.toLowerCase())) return false;
+  if(f.subtype&&!((card.type_line?.split('—')[1]||'').toLowerCase().includes(f.subtype.toLowerCase()))) return false;
+  if(f.colors.length&&!f.colors.every(c=>(card.colors||[]).includes(c))) return false;
+  if(f.format&&card.legalities?.[f.format]!=='legal') return false;
   return true;
 }
 
 // Render search results
 function renderResults(cards){
-  const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML = '';
+  const resultsDiv=document.getElementById('results'); resultsDiv.innerHTML='';
   if(!cards.length){ resultsDiv.innerHTML='<div class="muted">No results.</div>'; return; }
   cards.slice(0,50).forEach(card=>{
-    const row = document.createElement('div'); row.className='result';
-    const thumb = document.createElement('div'); thumb.className='thumb'; thumb.textContent=(card.set||'').toUpperCase();
-    const meta = document.createElement('div'); meta.className='meta';
+    const row=document.createElement('div'); row.className='result';
+    const thumb=document.createElement('div'); thumb.className='thumb'; thumb.textContent=(card.set||'').toUpperCase();
+    const meta=document.createElement('div'); meta.className='meta';
     meta.innerHTML=`<strong>${card.name}</strong><small>${card.type_line||''}</small>`;
     const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='6px';
     const addBtn=document.createElement('button'); addBtn.textContent='Add';
@@ -189,11 +179,6 @@ function renderResults(cards){
 }
 
 // Deck functions
-function updateDeckText(){
-  const textarea = document.getElementById('deckText');
-  textarea.value = Object.values(deckMap).map(d=>`${d.count} ${d.card.name}`).join('\n');
-}
-
 function renderDeck(){
   const deckArea=document.getElementById('deckArea'); deckArea.innerHTML='';
   for(const name in deckMap){
@@ -204,31 +189,36 @@ function renderDeck(){
   updateDeckText();
 }
 
+function updateDeckText(){
+  const textarea=document.getElementById('deckText');
+  textarea.value=Object.values(deckMap).map(d=>`${d.count} ${d.card.name}`).join('\n');
+}
+
 function addToDeck(card){
   const name=card.name;
-  if(!deckMap[name]) deckMap[name]={count:0, card};
+  if(!deckMap[name]) deckMap[name]={count:0,card};
   deckMap[name].count++;
   renderDeck();
 }
 
-// Search flow
+// Search
 async function doSearch(query){
   document.getElementById('results').innerHTML='<div class="muted">Searching…</div>';
   try{
-    const data = await fetchCards(query,lastPage);
-    const filters = gatherFilters();
-    const filtered = (data.data||[]).filter(c=>cardMatchesFilters(c,filters));
+    const data=await fetchCards(query,lastPage);
+    const f=gatherFilters();
+    const filtered=(data.data||[]).filter(c=>cardMatchesFilters(c,f));
     renderResults(filtered);
   }catch(e){ document.getElementById('results').innerHTML='<div class="muted">Error fetching cards.</div>'; console.error(e);}
 }
 
 // Events
-document.getElementById('searchBtn').onclick = ()=>{ lastPage=1; doSearch(document.getElementById('q').value.trim()||'a'); };
+document.getElementById('searchBtn').onclick=()=>{ lastPage=1; doSearch(document.getElementById('q').value.trim()||'a'); };
 document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ lastPage=1; doSearch(document.getElementById('q').value.trim()||'a'); }});
-document.getElementById('toggleFilters').onclick = ()=>{
+document.getElementById('toggleFilters').onclick=()=>{
   const panel=document.getElementById('filterPanel');
-  panel.style.display = panel.style.display==='none'?'block':'none';
-  document.getElementById('toggleFilters').textContent = panel.style.display==='none'?'Show Advanced Filters':'Hide Advanced Filters';
+  panel.style.display=panel.style.display==='none'?'block':'none';
+  document.getElementById('toggleFilters').textContent=panel.style.display==='none'?'Show Advanced Filters':'Hide Advanced Filters';
 };
 document.getElementById('applyFilters').onclick=()=>{ lastPage=1; doSearch(document.getElementById('q').value.trim()||'a'); };
 document.getElementById('clearFilters').onclick=()=>{
@@ -239,15 +229,14 @@ document.getElementById('clearFilters').onclick=()=>{
   document.getElementById('formatSelect').value='';
 };
 
-// Export / Import
-document.getElementById('exportBtn').onclick = ()=>{
-  const list = document.getElementById('deckText').value;
-  const blob = new Blob([list],{type:'text/plain'});
+// Import/Export
+document.getElementById('exportBtn').onclick=()=>{
+  const blob=new Blob([document.getElementById('deckText').value],{type:'text/plain'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='deck.txt'; a.click(); URL.revokeObjectURL(a.href);
 };
 
-document.getElementById('importBtn').onclick = ()=>{
-  const raw = prompt('Paste plain deck list (e.g., "4 Lightning Bolt")');
+document.getElementById('importBtn').onclick=()=>{
+  const raw=prompt('Paste plain deck list (e.g., "4 Lightning Bolt")');
   if(!raw) return;
   deckMap={};
   raw.split('\n').forEach(line=>{

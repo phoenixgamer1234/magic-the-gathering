@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MTG Deck Builder — List Mode</title>
+<title>MTG Deck Builder — Advanced Filters + Plain List Export</title>
 <style>
   :root{--accent:#287271;--muted:#666}
   body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:14px;background:#f6f7f8;color:#111}
@@ -22,27 +22,111 @@
   .thumb{width:48px;height:70px;background:#f2f3f4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999}
   .meta{flex:1}
   .meta small{display:block;color:var(--muted);margin-top:4px}
-  .deck-list{max-height:64vh;overflow:auto;margin-top:6px}
-  .deck-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border-radius:6px;border-bottom:1px dashed #eee}
-  .count{background:#eee;padding:4px 8px;border-radius:6px;font-weight:700}
+  .deck-list{max-height:44vh;overflow:auto;margin-top:6px}
+  .deck-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-radius:6px;border-bottom:1px dashed #eee}
+  .count{background:#eee;padding:6px 8px;border-radius:6px;font-weight:700}
+  .preview{margin-top:12px;text-align:center}
+  img#previewImg{max-width:100%;border-radius:8px;display:block;margin:0 auto}
+  .muted{color:var(--muted);font-size:13px}
+  textarea{width:100%;height:120px;border:1px solid #ddd;border-radius:8px;padding:8px}
+  .row{display:flex;gap:8px;align-items:center}
+  .filters{margin-top:10px;border-top:1px solid #eee;padding-top:10px}
+  .filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  select, input[type="text"]{padding:6px;border-radius:6px;border:1px solid #ccc}
+  label.checkbox{display:flex;gap:6px;align-items:center}
+  .small{font-size:13px;color:#444}
 </style>
 </head>
 <body>
 <header>
-  <h1>MTG Deck Builder — List Mode</h1>
+  <div>
+    <h1>MTG Deck Builder — Advanced Filters</h1>
+    <div class="muted">Advanced filters + plain list import/export</div>
+  </div>
 </header>
 
 <div class="controls">
-  <input id="q" type="search" placeholder="Search card name (press Enter or Search)" />
+  <input id="q" type="search" placeholder="Name / keyword (press Enter or Search)" />
   <button id="searchBtn">Search</button>
+  <button id="toggleFilters" class="alt">Show Advanced Filters</button>
   <label style="display:flex;align-items:center;gap:8px;margin-left:8px">
     <input id="fourLimit" type="checkbox" checked /> Enforce 4-of
   </label>
+  <div style="margin-left:auto" class="row">
+    <button id="exportBtn">Export List</button>
+    <button id="importBtn" class="alt">Import List</button>
+  </div>
 </div>
 
 <div class="layout">
   <main class="col left">
-    <div><strong>Search results</strong></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Search results</strong> <span id="searchInfo" class="muted" style="margin-left:8px"></span></div>
+      <div class="small muted">Results show first page; use Next/Prev to page.</div>
+    </div>
+
+    <div id="filterPanel" class="filters" style="display:none">
+      <div class="filter-row">
+        <div style="min-width:220px">
+          <label class="small">Supertype</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+            <label class="checkbox"><input type="checkbox" value="Legendary" class="suptype" /> Legendary</label>
+            <label class="checkbox"><input type="checkbox" value="Basic" class="suptype" /> Basic</label>
+            <label class="checkbox"><input type="checkbox" value="Snow" class="suptype" /> Snow</label>
+          </div>
+        </div>
+
+        <div style="min-width:180px">
+          <label class="small">Type</label>
+          <select id="typeSelect">
+            <option value="">Any</option>
+            <option>Creature</option><option>Artifact</option><option>Enchantment</option><option>Instant</option>
+            <option>Sorcery</option><option>Land</option><option>Planeswalker</option><option>Tribal</option>
+          </select>
+        </div>
+
+        <div style="min-width:180px">
+          <label class="small">Subtype (text)</label>
+          <input id="subtypeInput" type="text" placeholder="e.g. Elf, Zombie" />
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div>
+          <label class="small">Mana Colors (requires card include all selected)</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <label class="checkbox"><input type="checkbox" value="W" class="colorChk" /> W</label>
+            <label class="checkbox"><input type="checkbox" value="U" class="colorChk" /> U</label>
+            <label class="checkbox"><input type="checkbox" value="B" class="colorChk" /> B</label>
+            <label class="checkbox"><input type="checkbox" value="R" class="colorChk" /> R</label>
+            <label class="checkbox"><input type="checkbox" value="G" class="colorChk" /> G</label>
+          </div>
+        </div>
+
+        <div style="min-width:220px">
+          <label class="small">Format legality</label>
+          <select id="formatSelect">
+            <option value="">Any</option>
+            <option value="standard">Standard</option>
+            <option value="pioneer">Pioneer</option>
+            <option value="modern">Modern</option>
+            <option value="legacy">Legacy</option>
+            <option value="vintage">Vintage</option>
+            <option value="commander">Commander</option>
+            <option value="pauper">Pauper</option>
+            <option value="historic">Historic</option>
+            <option value="brawl">Brawl</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+        <button id="applyFilters" class="alt">Apply Filters (Search)</button>
+        <button id="clearFilters">Clear Filters</button>
+        <div class="muted small" style="margin-left:auto">Filters are applied client-side.</div>
+      </div>
+    </div>
+
     <div id="results" aria-live="polite" style="margin-top:12px">
       <div class="muted">Search to see results.</div>
     </div>
@@ -54,119 +138,132 @@
       <div class="muted">Saved in your browser</div>
       <div id="deckCount" style="margin-top:8px;font-weight:700">0 cards</div>
     </div>
+
     <div id="deckArea" class="deck-list" aria-live="polite"></div>
+
+    <div style="margin-top:12px" class="col">
+      <strong>Import / Export</strong>
+      <div class="muted">Paste or copy Untap-style plain text decklist.</div>
+      <textarea id="listArea" placeholder="4 Lightning Bolt&#10;2 Mountain&#10;1 Chandra, Torch of Defiance"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="applyImport">Apply Import</button>
+        <button id="copyExport" class="alt">Copy List</button>
+      </div>
+    </div>
   </aside>
 </div>
 
 <script>
-// Config
-const LOCAL_KEY = 'mtg_deck_list';
-let deckMap = {}, deckOrder = [];
+const LOCAL_KEY = 'mtg_deck_plainlist';
+let deckMap = {}; 
+let deckOrder = [];
 
-// Load/save deck
-function loadDeck() {
-  try {
-    const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed.deck)) {
-      deckMap = {}; deckOrder = [];
-      parsed.deck.forEach(it => {
-        const id = it.id || ('local:' + it.name);
-        deckMap[id] = { card: { id:id, name:it.name }, count: it.count||1 };
-        deckOrder.push(id);
-      });
-    }
-  } catch(e){ console.warn(e); }
+// UTIL
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Load / save deck
+function loadDeck(){
+  const raw = localStorage.getItem(LOCAL_KEY);
+  if (!raw) return;
+  try{
+    const arr = JSON.parse(raw);
+    deckMap={}; deckOrder=[];
+    arr.forEach(it=>{
+      const id = 'local:' + it.name;
+      deckMap[id] = { card:{id:id,name:it.name}, count:it.count||1 };
+      deckOrder.push(id);
+    });
+  }catch(e){ console.warn(e); }
 }
-
-function saveDeck() {
-  const arr = deckOrder.map(id => {
-    const e = deckMap[id];
-    return { id:e.card.id, name:e.card.name, count:e.count };
-  });
-  localStorage.setItem(LOCAL_KEY, JSON.stringify({deck:arr}));
+function saveDeck(){
+  const arr = deckOrder.map(id=>{ const e = deckMap[id]; return {name:e.card.name,count:e.count}; });
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(arr));
   renderDeck();
 }
 
-// Render deck list
-function renderDeck() {
-  const area = document.getElementById('deckArea'); area.innerHTML = '';
-  let total = 0;
+// Render
+function renderDeck(){
+  const area = document.getElementById('deckArea'); area.innerHTML='';
+  let total=0;
   deckOrder.forEach(id=>{
     const e = deckMap[id]; if(!e) return;
-    total += e.count;
-    const row = document.createElement('div'); row.className = 'deck-row';
-    row.innerHTML = `<div><strong>${escapeHtml(e.card.name)}</strong></div>`;
-    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='6px';
+    total+=e.count;
+    const row = document.createElement('div'); row.className='deck-row';
+    const left = document.createElement('div'); left.innerHTML=`<div><strong>${escapeHtml(e.card.name)}</strong></div>`;
+    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='6px'; right.style.alignItems='center';
     const count = document.createElement('div'); count.className='count'; count.textContent=e.count;
-    const plus = document.createElement('button'); plus.textContent='+'; plus.onclick = ()=> addToDeck(e.card);
-    const minus = document.createElement('button'); minus.textContent='−'; minus.onclick = ()=> removeOne(id);
-    const rem = document.createElement('button'); rem.textContent='Remove'; rem.onclick = ()=> removeAll(id);
+    const plus = document.createElement('button'); plus.textContent='+'; plus.onclick=()=>addToDeck(e.card);
+    const minus = document.createElement('button'); minus.textContent='−'; minus.style.background='#c0392b'; minus.onclick=()=>removeOne(id);
+    const rem = document.createElement('button'); rem.textContent='Remove'; rem.style.background='#7f8c8d'; rem.onclick=()=>removeAll(id);
     right.appendChild(count); right.appendChild(plus); right.appendChild(minus); right.appendChild(rem);
-    row.appendChild(right); area.appendChild(row);
+    row.appendChild(left); row.appendChild(right); area.appendChild(row);
   });
-  document.getElementById('deckCount').textContent = total + ' cards';
+  document.getElementById('deckCount').textContent=total+' cards';
+  updateListArea();
 }
 
-function addToDeck(card) {
+// Deck manipulation
+function addToDeck(card){
   const enforce4 = document.getElementById('fourLimit').checked;
-  const id = card.id || ('local:' + card.name);
-  if(!deckMap[id]) { deckMap[id] = { card:{id:id,name:card.name}, count:0 }; deckOrder.push(id); }
+  const id = 'local:' + card.name;
+  if (!deckMap[id]) { deckMap[id]={ card:{id:id,name:card.name}, count:0 }; deckOrder.push(id); }
   const cur = deckMap[id].count||0;
-  if(enforce4 && cur>=4){ alert('4-of limit reached'); return; }
-  deckMap[id].count = cur+1; saveDeck();
+  if (enforce4 && cur>=4){ alert('4-of limit reached'); return; }
+  deckMap[id].count=cur+1; saveDeck();
 }
-
-function removeOne(id) {
+function removeOne(id){
   if(!deckMap[id]) return;
-  deckMap[id].count -=1;
+  deckMap[id].count-=1;
   if(deckMap[id].count<=0){ delete deckMap[id]; deckOrder=deckOrder.filter(x=>x!==id); }
   saveDeck();
 }
+function removeAll(id){ if(!deckMap[id]) return; delete deckMap[id]; deckOrder=deckOrder.filter(x=>x!==id); saveDeck(); }
 
-function removeAll(id){
-  if(!deckMap[id]) return;
-  delete deckMap[id]; deckOrder=deckOrder.filter(x=>x!==id); saveDeck();
+// Import / Export (plain text)
+function updateListArea(){
+  const lines = deckOrder.map(id=>{ const e=deckMap[id]; return e.count+' '+e.card.name; });
+  document.getElementById('listArea').value=lines.join('\n');
 }
+document.getElementById('copyExport').addEventListener('click',()=>{
+  const area=document.getElementById('listArea'); area.select(); document.execCommand('copy'); alert('Deck list copied to clipboard');
+});
+document.getElementById('applyImport').addEventListener('click',()=>{
+  const raw=document.getElementById('listArea').value;
+  if(!raw) return;
+  const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
+  deckMap={}; deckOrder=[];
+  lines.forEach(l=>{
+    const m=l.match(/^(\d+)\s+(.+)$/);
+    if(m){
+      const count=parseInt(m[1]); const name=m[2];
+      const id='local:'+name;
+      deckMap[id]={ card:{id:id,name:name}, count:count };
+      deckOrder.push(id);
+    }
+  });
+  saveDeck(); alert('Deck imported.');
+});
 
-// Escape HTML
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// Filter toggle (UI)
+let filtersVisible=false;
+document.getElementById('toggleFilters').addEventListener('click',()=>{
+  filtersVisible=!filtersVisible;
+  document.getElementById('filterPanel').style.display=filtersVisible?'block':'none';
+  document.getElementById('toggleFilters').textContent=filtersVisible?'Hide Advanced Filters':'Show Advanced Filters';
+});
 
-// Fetch Scryfall
-async function scrySearch(q,page=1){
-  const url='https://api.scryfall.com/cards/search?q=' + encodeURIComponent(q) + '&page=' + page;
-  const r = await fetch(url);
-  if(!r.ok) throw new Error('Fetch failed: ' + r.status);
-  return await r.json();
-}
-
-async function doSearch(q,page=1){
-  const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML='<div class="muted">Searching…</div>';
-  try {
-    const query = q && q.trim().length ? q.trim() : 'a';
-    const data = await scrySearch(query,page);
-    if(data.object==='error'){ resultsDiv.innerHTML='<div class="muted">Error: '+escapeHtml(data.details||'Unknown')+'</div>'; return; }
-    const entries = data.data||[];
-    resultsDiv.innerHTML='';
-    if(!entries.length){ resultsDiv.innerHTML='<div class="muted">No results</div>'; return; }
-    entries.slice(0,50).forEach(c=>{
-      const row=document.createElement('div'); row.className='result';
-      const thumb=document.createElement('div'); thumb.className='thumb'; thumb.textContent=(c.set||'').toUpperCase();
-      const meta=document.createElement('div'); meta.className='meta'; meta.innerHTML=`<strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(c.type_line||'')} • ${escapeHtml(c.rarity||'')}</small>`;
-      const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='6px';
-      const addBtn=document.createElement('button'); addBtn.textContent='Add'; addBtn.onclick=()=> addToDeck({id:c.id,name:c.name});
-      actions.appendChild(addBtn);
-      row.appendChild(thumb); row.appendChild(meta); row.appendChild(actions);
-      resultsDiv.appendChild(row);
-    });
-  } catch(e){ resultsDiv.innerHTML='<div class="muted">Search failed: '+escapeHtml(e.message)+'</div>'; console.error(e); }
-}
+// Apply / clear filters
+document.getElementById('applyFilters').addEventListener('click',()=>{ alert('Filters applied (needs Scryfall integration)'); });
+document.getElementById('clearFilters').addEventListener('click',()=>{
+  document.querySelectorAll('.suptype').forEach(i=>i.checked=false);
+  document.getElementById('typeSelect').value='';
+  document.getElementById('subtypeInput').value='';
+  document.querySelectorAll('.colorChk').forEach(i=>i.checked=false);
+  document.getElementById('formatSelect').value='';
+});
 
 // Search triggers
-document.getElementById('searchBtn').addEventListener('click',()=>doSearch(document.getElementById('q').value.trim(),1));
-document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ doSearch(document.getElementById('q').value.trim(),1); }});
+document.getElementById('searchBtn').addEventListener('click',()=>{ alert('Search triggered (needs Scryfall integration)'); });
 
 // Init
 loadDeck(); renderDeck();

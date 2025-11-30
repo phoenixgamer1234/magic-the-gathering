@@ -1,302 +1,299 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MTG Dual Deck Builder</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MTG Dual Deck Builder — Full</title>
 <style>
 :root{--accent:#287271;--muted:#666}
 body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:14px;background:#f6f7f8;color:#111}
-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 h1{font-size:20px;margin:0}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-input[type="search"]{padding:8px 10px;border:1px solid #ccc;border-radius:8px;width:320px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+input[type="search"],select{padding:6px 10px;border:1px solid #ccc;border-radius:8px}
 button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
 button.alt{background:#444}
 .layout{display:flex;gap:16px;align-items:flex-start}
-.col{background:#fff;border:1px solid #e2e4e6;padding:12px;border-radius:10px}
-.left{flex:1;min-width:360px}
-.right{width:380px}
-#results{max-height:64vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-top:6px}
+.col{background:#fff;border:1px solid #e2e4e6;padding:12px;border-radius:10px;flex:1;min-width:300px}
+#results{max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-top:6px}
 .result{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;border:1px solid #eee;background:#fff}
-.thumb{width:48px;height:70px;background:#f2f3f4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999}
-.meta{flex:1}
-.meta small{display:block;color:var(--muted);margin-top:4px}
-.deck-list{max-height:44vh;overflow:auto;margin-top:6px}
-.deck-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-radius:6px;border-bottom:1px dashed #eee}
-.count{background:#eee;padding:6px 8px;border-radius:6px;font-weight:700}
+.deck-list{max-height:30vh;overflow:auto;margin-top:6px;border:1px solid #ddd;border-radius:6px;padding:6px;background:#fdfdfd}
+.deck-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px;border-radius:6px;border-bottom:1px dashed #eee}
+.count{background:#eee;padding:4px 6px;border-radius:6px;font-weight:700}
 .preview{margin-top:12px;text-align:center}
 img#previewImg{max-width:100%;border-radius:8px;display:block;margin:0 auto}
 .muted{color:var(--muted);font-size:13px}
-textarea{width:100%;height:120px;border:1px solid #ddd;border-radius:8px;padding:8px}
-.row{display:flex;gap:8px;align-items:center}
-.filters{margin-top:10px;border-top:1px solid #eee;padding-top:10px}
-.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-select, input[type="text"]{padding:6px;border-radius:6px;border:1px solid #ccc}
-label.checkbox{display:flex;gap:6px;align-items:center}
-.small{font-size:13px;color:#444}
+textarea{width:100%;height:80px;border:1px solid #ddd;border-radius:8px;padding:8px;margin-top:6px;resize:none}
+.filter-panel{border-top:1px solid #eee;padding-top:6px;margin-top:6px}
+.filter-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+label.checkbox{display:flex;gap:4px;align-items:center}
 </style>
 </head>
 <body>
 <header>
-<div>
-<h1>MTG Dual Deck Builder</h1>
-<div class="muted">Two decks: Standard & Commander. Switch format to edit each deck independently.</div>
-</div>
+<h1>MTG Dual Deck Builder — Full</h1>
+<div class="muted">Manage Standard and Commander decks separately with full advanced filters.</div>
 </header>
 
 <div class="controls">
-<input id="q" type="search" placeholder="Name / keyword (press Enter or Search)" />
-<button id="searchBtn">Search</button>
-<label class="row" style="align-items:center;gap:6px;">
-Format:
+<label>Format:
 <select id="formatSelect">
 <option value="standard">Standard</option>
 <option value="commander">Commander</option>
 </select>
 </label>
-<button id="toggleFilters" class="alt">Show Advanced Filters</button>
+<input id="q" type="search" placeholder="Search card name">
+<button id="searchBtn">Search</button>
+<button id="toggleFilters" class="alt">Advanced Filters</button>
 </div>
 
 <div class="layout">
-<main class="col left">
-<strong>Search results</strong>
-<div id="results" aria-live="polite" style="margin-top:12px"><div class="muted">Search to see results.</div></div>
+<main class="col">
+<strong>Search Results</strong>
+<div id="results"><div class="muted">Search to see cards.</div></div>
 
-<div id="filterPanel" class="filters" style="display:none">
+<div id="filterPanel" class="filter-panel" style="display:none">
 <div class="filter-row">
-<label class="small">Supertype</label>
-<select id="supertypeSelect">
-<option value="">Any</option>
-<option>Legendary</option>
-<option>Basic</option>
-<option>Snow</option>
-</select>
-
-<label class="small">Type</label>
+<label>Type:
 <select id="typeSelect">
 <option value="">Any</option>
-<option>Creature</option>
-<option>Artifact</option>
-<option>Enchantment</option>
-<option>Instant</option>
-<option>Sorcery</option>
-<option>Land</option>
-<option>Planeswalker</option>
-<option>Tribal</option>
+<option>Creature</option><option>Artifact</option><option>Enchantment</option>
+<option>Instant</option><option>Sorcery</option><option>Land</option>
+<option>Planeswalker</option><option>Tribal</option>
 </select>
+</label>
 
-<label class="small">Color</label>
-<select id="colorSelect">
+<label>Supertypes:
+<select id="supertypeSelect">
 <option value="">Any</option>
-<option>W</option>
-<option>U</option>
-<option>B</option>
-<option>R</option>
-<option>G</option>
+<option>Legendary</option><option>Basic</option><option>Snow</option>
 </select>
+</label>
+
+<label>Subtype:
+<input id="subtypeInput" type="text" placeholder="e.g. Elf">
+</label>
 </div>
+
 <div class="filter-row">
-<label class="small">Subtype (text)</label>
-<input id="subtypeInput" type="text" placeholder="e.g. Elf, Zombie" />
+<label>Colors:
+<select id="colorSelect" multiple size="5">
+<option value="W">White</option>
+<option value="U">Blue</option>
+<option value="B">Black</option>
+<option value="R">Red</option>
+<option value="G">Green</option>
+</select>
+</label>
+
+<label>Format Legality:
+<select id="formatLegalitySelect">
+<option value="">Any</option>
+<option value="standard">Standard</option>
+<option value="commander">Commander</option>
+</select>
+</label>
 </div>
-<div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-<button id="applyFilters" class="alt">Apply Filters (Search)</button>
+
+<button id="applyFilters" class="alt">Apply Filters</button>
 <button id="clearFilters">Clear Filters</button>
-<div class="muted small" style="margin-left:auto">Filters are client-side.</div>
-</div>
 </div>
 </main>
 
-<aside class="col right">
-<div id="standardDeckAreaContainer">
-<strong>Standard Deck</strong>
-<div class="muted">Saved in browser</div>
-<div id="standardDeckCount" style="margin-top:8px;font-weight:700">0 cards</div>
-<div id="standardDeckArea" class="deck-list" aria-live="polite"></div>
-<div class="preview col" id="standardPreview">
-<strong id="standardPreviewTitle">Preview</strong>
-<div id="standardPreviewType" class="muted" style="margin-bottom:8px"></div>
-<img id="standardPreviewImg" alt="card preview" style="display:none;max-width:100%;border-radius:6px" />
-<div id="standardPreviewPlaceholder" class="muted">No card selected</div>
-</div>
-<div class="col" style="margin-top:10px">
-<strong>Deck List</strong>
-<div class="muted">Text list for import/export</div>
-<textarea id="standardList" placeholder="Deck list will appear here"></textarea>
-</div>
+<aside class="col">
+<strong id="deckTitle">Your Deck (Standard)</strong>
+<div class="deck-list" id="deckArea"></div>
+
+<strong>Import / Export List</strong>
+<textarea id="importExportArea" placeholder="Deck list will appear here or paste here to import"></textarea>
+<div style="display:flex;gap:6px;margin-top:4px">
+<button id="importDeckBtn">Apply Import</button>
+<button id="exportDeckBtn">Update Export</button>
 </div>
 
-<div id="commanderDeckAreaContainer" style="display:none">
-<strong>Commander Deck</strong>
-<div class="muted">Saved in browser</div>
-<div id="commanderDeckCount" style="margin-top:8px;font-weight:700">0 cards</div>
-<div id="commanderDeckArea" class="deck-list" aria-live="polite"></div>
-<div class="preview col" id="commanderPreview">
-<strong id="commanderPreviewTitle">Preview</strong>
-<div id="commanderPreviewType" class="muted" style="margin-bottom:8px"></div>
-<img id="commanderPreviewImg" alt="card preview" style="display:none;max-width:100%;border-radius:6px" />
-<div id="commanderPreviewPlaceholder" class="muted">No card selected</div>
-</div>
-<div class="col" style="margin-top:10px">
-<strong>Deck List</strong>
-<div class="muted">Text list for import/export</div>
-<textarea id="commanderList" placeholder="Deck list will appear here"></textarea>
-</div>
+<div class="preview">
+<strong id="previewTitle">Preview</strong>
+<div class="muted" id="previewType"></div>
+<img id="previewImg" alt="card preview" style="display:none">
+<div id="previewPlaceholder" class="muted">No card selected</div>
 </div>
 </aside>
 </div>
 
 <script>
-// Decks
-let standardDeckMap={}, standardDeckOrder=[];
-let commanderDeckMap={}, commanderDeckOrder=[];
-let currentFormat='standard';
+const decks={
+standard:{map:{},order:[]},
+commander:{map:{},order:[],commander:null}
+};
+let activeFormat='standard';
+let lastSearchData=[];
 
-// Helpers
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function getCurrentDeck(){ 
-  if(currentFormat==='standard') return { map:standardDeckMap, order:standardDeckOrder, area:'standardDeckArea', count:'standardDeckCount', list:'standardList', preview:'standardPreview', maxCount:4, minCards:60 };
-  return { map:commanderDeckMap, order:commanderDeckOrder, area:'commanderDeckArea', count:'commanderDeckCount', list:'commanderList', preview:'commanderPreview', maxCount:1, minCards:100 };
-}
+function getCurrentDeck(){ return decks[activeFormat]; }
+function updateDeckTitle(){ document.getElementById('deckTitle').textContent='Your Deck ('+activeFormat.charAt(0).toUpperCase()+activeFormat.slice(1)+')'; }
 
-// Render Deck
 function renderDeck(){
   const deck=getCurrentDeck();
-  const area=document.getElementById(deck.area); area.innerHTML='';
+  const area=document.getElementById('deckArea');
+  area.innerHTML='';
   let total=0;
   deck.order.forEach(id=>{
-    const e=deck.map[id]; if(!e) return;
+    const e=deck.map[id];
     total+=e.count;
     const row=document.createElement('div'); row.className='deck-row';
-    const left=document.createElement('div'); left.innerHTML=`<div><strong>${escapeHtml(e.card.name)}</strong></div><div class="muted">${escapeHtml(e.card.type_line||'')}</div>`;
-    const right=document.createElement('div'); right.style.display='flex'; right.style.gap='6px'; right.style.alignItems='center';
-    const countDiv=document.createElement('div'); countDiv.className='count'; countDiv.textContent=e.count;
-    const plus=document.createElement('button'); plus.textContent='+'; plus.onclick=()=> addToDeck(e.card);
-    const minus=document.createElement('button'); minus.textContent='−'; minus.style.background='#c0392b'; minus.onclick=()=> removeOne(id);
-    const rem=document.createElement('button'); rem.textContent='Remove'; rem.style.background='#7f8c8d'; rem.onclick=()=> removeAll(id);
-    right.appendChild(countDiv); right.appendChild(plus); right.appendChild(minus); right.appendChild(rem);
-    row.appendChild(left); row.appendChild(right);
-    area.appendChild(row);
+    const left=document.createElement('div'); left.innerHTML=`<strong>${e.card.name}</strong> <span class="muted">${e.card.type_line||''}</span>`;
+    const right=document.createElement('div'); right.style.display='flex'; right.style.gap='6px';
+    const count=document.createElement('div'); count.className='count'; count.textContent=e.count;
+    const plus=document.createElement('button'); plus.textContent='+'; plus.onclick=()=>addToDeck(e.card);
+    const minus=document.createElement('button'); minus.textContent='−'; minus.onclick=()=>removeOne(id);
+    const rem=document.createElement('button'); rem.textContent='Remove'; rem.onclick=()=>removeAll(id);
+    right.append(count,plus,minus,rem);
+    row.append(left,right); area.appendChild(row);
   });
-  document.getElementById(deck.count).textContent=total+' cards';
-  updateDeckList();
+  updateExportArea();
 }
 
-// Add/Remove
 function addToDeck(card){
   const deck=getCurrentDeck();
   const id=card.id||('local:'+card.name);
-  if(!deck.map[id]) deck.map[id]={card:{id:id,name:card.name,type_line:card.type_line||'',image_uris:card.image_uris||null},count:0};
-  // Enforce format rules
-  if(deck.map[id].count>=deck.maxCount){ alert(`Max copies reached for this card (${deck.maxCount})`); return; }
-  deck.map[id].count+=1;
-  if(!deck.order.includes(id)) deck.order.push(id);
+  const count=deck.map[id]?.count||0;
+  if(activeFormat==='standard' && count>=4){ alert('Standard max 4 copies per card'); return; }
+  if(activeFormat==='commander'){
+    if(deck.commander && id===deck.commander.id){ deck.map[id].count++; renderDeck(); return; }
+    if(deck.map[id] && count>=1){ alert('Commander: only 1 copy per card'); return; }
+  }
+  if(!deck.map[id]) deck.order.push(id), deck.map[id]={card:{id:id,name:card.name,type_line:card.type_line||'',image_uris:card.image_uris||null},count:0};
+  deck.map[id].count=(deck.map[id].count||0)+1;
   renderDeck();
 }
-function removeOne(id){ const deck=getCurrentDeck(); if(!deck.map[id]) return; deck.map[id].count-=1; if(deck.map[id].count<=0){ delete deck.map[id]; deck.order=deck.order.filter(x=>x!==id);} renderDeck();}
-function removeAll(id){ const deck=getCurrentDeck(); if(!deck.map[id]) return; delete deck.map[id]; deck.order=deck.order.filter(x=>x!==id); renderDeck();}
 
-// Deck List
-function updateDeckList(){
+function removeOne(id){
   const deck=getCurrentDeck();
-  const listArea=document.getElementById(deck.list);
-  const lines=deck.order.map(id=>{ const e=deck.map[id]; return `${e.count} ${e.card.name}`; });
-  listArea.value=lines.join('\n');
+  if(!deck.map[id]) return;
+  deck.map[id].count--;
+  if(deck.map[id].count<=0){ delete deck.map[id]; deck.order=deck.order.filter(x=>x!==id); }
+  renderDeck();
+}
+
+function removeAll(id){
+  const deck=getCurrentDeck();
+  if(deck.map[id]){ delete deck.map[id]; deck.order=deck.order.filter(x=>x!==id); renderDeck(); }
 }
 
 // Preview
-function showPreview(card){
-  const deck=getCurrentDeck();
-  const pre=document.getElementById(deck.preview);
-  const title=document.getElementById(deck.preview+'Title');
-  const type=document.getElementById(deck.preview+'Type');
-  const img=document.getElementById(deck.preview+'Img');
-  const ph=document.getElementById(deck.preview+'Placeholder');
-  title.textContent=card.name;
-  type.textContent=card.type_line||'';
-  if(card.image_uris && card.image_uris.normal){ img.src=card.image_uris.normal; img.style.display='block'; ph.style.display='none'; }
-  else{ img.style.display='none'; ph.style.display='block'; ph.textContent='No image available'; }
+async function loadAndPreview(id){
+  try{
+    const res=await fetch('https://api.scryfall.com/cards/'+encodeURIComponent(id));
+    const card=await res.json();
+    let img='';
+    if(card.image_uris?.normal) img=card.image_uris.normal;
+    else if(card.card_faces?.[0]?.image_uris?.normal) img=card.card_faces[0].image_uris.normal;
+    const imgEl=document.getElementById('previewImg');
+    const ph=document.getElementById('previewPlaceholder');
+    if(img){ imgEl.src=img; imgEl.style.display='block'; ph.style.display='none'; }
+    else{ imgEl.style.display='none'; ph.style.display='block'; ph.textContent='No image available'; }
+    document.getElementById('previewTitle').textContent=card.name;
+    document.getElementById('previewType').textContent=card.type_line||'';
+  }catch(e){ alert('Preview failed: '+e.message); }
 }
 
-// Format Switch
-document.getElementById('formatSelect').addEventListener('change',e=>{
-  currentFormat=e.target.value;
-  document.getElementById('standardDeckAreaContainer').style.display=currentFormat==='standard'?'block':'none';
-  document.getElementById('commanderDeckAreaContainer').style.display=currentFormat==='commander'?'block':'none';
-  renderDeck();
-});
-
-// Toggle Filters
-let filtersVisible=false;
-document.getElementById('toggleFilters').addEventListener('click',()=>{ filtersVisible=!filtersVisible; document.getElementById('filterPanel').style.display=filtersVisible?'block':'none'; document.getElementById('toggleFilters').textContent=filtersVisible?'Hide Advanced Filters':'Show Advanced Filters'; });
-
-// Scryfall API Search
-const resultsDiv=document.getElementById('results');
-async function fetchScryfall(q){
-  const query=q.trim().length?q.trim():'a';
-  const url='https://api.scryfall.com/cards/search?q='+encodeURIComponent(query)+'&unique=cards';
-  const resp=await fetch(url); 
-  const data=await resp.json();
-  return data.data||[];
+// Filters
+function gatherFilters(){
+  const type=document.getElementById('typeSelect').value||'';
+  const supertype=document.getElementById('supertypeSelect').value||'';
+  const subtype=document.getElementById('subtypeInput').value.trim()||'';
+  const colors=Array.from(document.getElementById('colorSelect').selectedOptions).map(o=>o.value);
+  const legality=document.getElementById('formatLegalitySelect').value||'';
+  return {type,supertype,subtype,colors,legality};
 }
 
-// Filter
-function cardMatchesFilters(card){
-  const supertype=document.getElementById('supertypeSelect').value.toLowerCase();
-  const type=document.getElementById('typeSelect').value.toLowerCase();
-  const color=document.getElementById('colorSelect').value.toUpperCase();
-  const subtype=document.getElementById('subtypeInput').value.toLowerCase();
-
-  if(supertype && !(card.type_line||'').toLowerCase().includes(supertype)) return false;
-  if(type && !(card.type_line||'').toLowerCase().includes(type)) return false;
-  if(color && !(card.colors||[]).includes(color)) return false;
-  if(subtype){
+function cardMatchesFilters(card,filters){
+  if(filters.supertype && !(card.type_line||'').toLowerCase().includes(filters.supertype.toLowerCase())) return false;
+  if(filters.type && !(card.type_line||'').toLowerCase().includes(filters.type.toLowerCase())) return false;
+  if(filters.subtype){
     const parts=(card.type_line||'').split('—');
-    if(!parts[1] || !parts[1].toLowerCase().includes(subtype)) return false;
+    if(!parts[1] || !parts[1].toLowerCase().includes(filters.subtype.toLowerCase())) return false;
+  }
+  if(filters.colors.length>0){
+    const c=card.colors||[];
+    if(!filters.colors.every(ch=>c.includes(ch))) return false;
+  }
+  if(filters.legality){
+    if(!card.legalities || card.legalities[filters.legality]!=='legal') return false;
   }
   return true;
 }
 
-async function doSearch(q){
-  resultsDiv.innerHTML='<div class="muted">Searching...</div>';
+// Search
+async function doSearch(){
+  const query=document.getElementById('q').value.trim()||'a';
+  resultsDiv.innerHTML='<div class="muted">Searching…</div>';
   try{
-    const cards=await fetchScryfall(q);
-    const filtered=cards.filter(cardMatchesFilters);
-    renderSearchResults(filtered);
+    const res=await fetch('https://api.scryfall.com/cards/search?q='+encodeURIComponent(query));
+    const data=await res.json();
+    if(!data.data){ resultsDiv.innerHTML='<div class="muted">No results</div>'; return; }
+    lastSearchData=data.data;
+    const filters=gatherFilters();
+    const filtered=data.data.filter(c=>cardMatchesFilters(c,filters));
+    resultsDiv.innerHTML='';
+    filtered.forEach(c=>{
+      const row=document.createElement('div'); row.className='result';
+      const meta=document.createElement('div'); meta.innerHTML=`<strong>${c.name}</strong> <span class="muted">${c.type_line||''}</span>`;
+      const addBtn=document.createElement('button'); addBtn.textContent='Add'; addBtn.onclick=()=>addToDeck(c);
+      const prevBtn=document.createElement('button'); prevBtn.textContent='Preview'; prevBtn.onclick=()=>loadAndPreview(c.id);
+      row.append(meta,addBtn,prevBtn);
+      resultsDiv.appendChild(row);
+    });
   }catch(e){ resultsDiv.innerHTML='<div class="muted">Search failed</div>'; console.error(e); }
 }
 
-function renderSearchResults(cards){
-  resultsDiv.innerHTML='';
-  if(!cards.length){ resultsDiv.innerHTML='<div class="muted">No results</div>'; return; }
-  cards.forEach(card=>{
-    const row=document.createElement('div'); row.className='result';
-    const thumb=document.createElement('div'); thumb.className='thumb'; thumb.textContent=(card.set||'').toUpperCase();
-    const meta=document.createElement('div'); meta.className='meta';
-    meta.innerHTML=`<strong>${escapeHtml(card.name)}</strong><small>${escapeHtml(card.type_line||'')} • ${escapeHtml(card.rarity||'')}</small>`;
-    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='6px';
-    const previewBtn=document.createElement('button'); previewBtn.textContent='Preview'; previewBtn.onclick=()=> showPreview(card);
-    const addBtn=document.createElement('button'); addBtn.textContent='Add'; addBtn.onclick=()=> addToDeck(card);
-    actions.appendChild(previewBtn); actions.appendChild(addBtn);
-    row.appendChild(thumb); row.appendChild(meta); row.appendChild(actions);
-    resultsDiv.appendChild(row);
-  });
+// Export/Import text
+function updateExportArea(){
+  const deck=getCurrentDeck();
+  let txt='';
+  deck.order.forEach(id=>{ const e=deck.map[id]; txt+=`${e.count} ${e.card.name}\n`; });
+  document.getElementById('importExportArea').value=txt.trim();
 }
 
-// Search events
-document.getElementById('searchBtn').addEventListener('click',()=>doSearch(document.getElementById('q').value));
-document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(document.getElementById('q').value); });
+document.getElementById('searchBtn').addEventListener('click',doSearch);
 
-// Apply / Clear Filters
-document.getElementById('applyFilters').addEventListener('click',()=>doSearch(document.getElementById('q').value));
-document.getElementById('clearFilters').addEventListener('click',()=>{
-  document.getElementById('supertypeSelect').value='';
-  document.getElementById('typeSelect').value='';
-  document.getElementById('colorSelect').value='';
-  document.getElementById('subtypeInput').value='';
+document.getElementById('formatSelect').addEventListener('change',(e)=>{
+  activeFormat=e.target.value; updateDeckTitle(); renderDeck();
 });
 
+document.getElementById('toggleFilters').addEventListener('click',()=>{
+  const panel=document.getElementById('filterPanel');
+  panel.style.display=panel.style.display==='none'?'block':'none';
+});
+
+document.getElementById('applyFilters').addEventListener('click',doSearch);
+document.getElementById('clearFilters').addEventListener('click',()=>{
+  document.getElementById('typeSelect').value='';
+  document.getElementById('supertypeSelect').value='';
+  document.getElementById('subtypeInput').value='';
+  Array.from(document.getElementById('colorSelect').options).forEach(o=>o.selected=false);
+  document.getElementById('formatLegalitySelect').value='';
+  doSearch();
+});
+
+document.getElementById('importDeckBtn').addEventListener('click',()=>{
+  const text=document.getElementById('importExportArea').value;
+  if(!text) return;
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  const deck=getCurrentDeck();
+  deck.map={}; deck.order=[]; deck.commander=null;
+  lines.forEach(line=>{
+    const m=line.match(/^(\d+)\s+(.*)$/);
+    if(m){
+      const count=parseInt(m[1]); const name=m[2]; const id='local:'+name;
+      deck.map[id]={card:{id:id,name:name,type_line:'',image_uris:null},count:count};
+      deck.order.push(id);
+    }
+  });
+  renderDeck();
+});
+
+document.getElementById('exportDeckBtn').addEventListener('click',updateExportArea);
+
+updateDeckTitle();
 renderDeck();
 </script>
 </body>

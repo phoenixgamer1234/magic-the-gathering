@@ -1,250 +1,204 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MTG Deck Builder — Deck + Untap List</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTG Deck Builder</title>
 <style>
-body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:14px;background:#f6f7f8;color:#111}
-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-h1{font-size:20px;margin:0}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-input[type="search"]{padding:8px 10px;border:1px solid #ccc;border-radius:8px;width:320px}
-button{background:#287271;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
-button.alt{background:#444}
-.layout{display:flex;gap:16px;align-items:flex-start}
-.col{background:#fff;border:1px solid #e2e4e6;padding:12px;border-radius:10px}
-.left{flex:1;min-width:360px}
-.right{width:400px}
-#results{max-height:50vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-top:6px}
-.result{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;border:1px solid #eee;background:#fff}
-.thumb{width:48px;height:70px;background:#f2f3f4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999}
-.meta{flex:1}
-.meta small{display:block;color:#666;margin-top:4px}
-.deck-list{max-height:25vh;overflow:auto;margin-top:6px}
-.deck-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border-radius:6px;border-bottom:1px dashed #eee}
-.count{background:#eee;padding:6px 8px;border-radius:6px;font-weight:700}
-.preview{margin-top:12px;text-align:center}
-.muted{color:#666;font-size:13px}
-textarea{width:100%;height:120px;border:1px solid #ddd;border-radius:8px;padding:8px;margin-top:6px}
-.row{display:flex;gap:8px;align-items:center}
-.filters{margin-top:10px;border-top:1px solid #eee;padding-top:10px}
-.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-select, input[type="text"]{padding:6px;border-radius:6px;border:1px solid #ccc}
-label.checkbox{display:flex;gap:6px;align-items:center}
-.small{font-size:13px;color:#444}
+  body { font-family: Arial, sans-serif; margin: 14px; background: #f6f7f8; color: #111; }
+  h1 { font-size: 22px; margin-bottom: 10px; }
+  .layout { display: flex; gap: 16px; align-items: flex-start; }
+  .col { background: #fff; border: 1px solid #e2e4e6; padding: 12px; border-radius: 10px; }
+  .left { flex: 1; min-width: 360px; }
+  .right { width: 400px; }
+  #results { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+  .result { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; border: 1px solid #eee; background: #fff; }
+  .thumb { width: 48px; height: 70px; background: #f2f3f4; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #999; }
+  .meta { flex: 1; }
+  .meta small { display: block; color: #666; margin-top: 4px; }
+  .deck-list, #importExportArea { max-height: 30vh; overflow-y: auto; margin-top: 6px; padding: 4px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; }
+  .deck-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px; border-bottom: 1px dashed #eee; }
+  .count { background: #eee; padding: 4px 6px; border-radius: 4px; font-weight: 700; }
+  #preview { margin-top: 12px; text-align: center; }
+  #preview img { max-width: 100%; border-radius: 6px; display: block; margin: 6px auto; }
+  button { cursor: pointer; padding: 4px 8px; border-radius: 6px; border: none; background: #287271; color: white; }
+  button.alt { background: #444; }
+  select, input[type=text], input[type=search] { padding: 6px; border-radius: 6px; border: 1px solid #ccc; }
+  .muted { color: #666; font-size: 13px; }
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>MTG Deck Builder — Deck + Untap List</h1>
-    <div class="muted">Keep your deck list and plain Untap-style list separate.</div>
-  </div>
-</header>
 
-<div class="controls">
-  <input id="q" type="search" placeholder="Name / keyword (press Enter or Search)" />
-  <button id="searchBtn">Search</button>
-  <button id="toggleFilters" class="alt">Show Advanced Filters</button>
-</div>
+<h1>MTG Deck Builder — Standard / Commander</h1>
 
 <div class="layout">
-<main class="col left">
-  <div><strong>Search results</strong> <span id="searchInfo" class="muted"></span></div>
-  <div id="filterPanel" class="filters" style="display:none">
-    <div class="filter-row">
-      <div style="min-width:220px">
-        <label class="small">Supertype</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-          <label class="checkbox"><input type="checkbox" value="Legendary" class="suptype" /> Legendary</label>
-          <label class="checkbox"><input type="checkbox" value="Basic" class="suptype" /> Basic</label>
-          <label class="checkbox"><input type="checkbox" value="Snow" class="suptype" /> Snow</label>
-        </div>
-      </div>
-      <div style="min-width:180px">
-        <label class="small">Type</label>
-        <select id="typeSelect">
-          <option value="">Any</option>
-          <option>Creature</option><option>Artifact</option><option>Enchantment</option><option>Instant</option>
-          <option>Sorcery</option><option>Land</option><option>Planeswalker</option><option>Tribal</option>
-        </select>
-      </div>
-      <div style="min-width:180px">
-        <label class="small">Subtype (text)</label>
-        <input id="subtypeInput" type="text" placeholder="e.g. Elf, Zombie" />
-      </div>
+  <main class="col left">
+    <div class="controls">
+      <input type="search" id="searchInput" placeholder="Card name / keyword">
+      <button id="searchBtn">Search</button>
+      <select id="formatSelect">
+        <option value="standard">Standard</option>
+        <option value="commander">Commander</option>
+      </select>
+      <button id="toggleFilters" class="alt">Show Filters</button>
     </div>
-    <div class="filter-row">
-      <div>
-        <label class="small">Mana Colors (card must include all selected)</label>
-        <div style="display:flex;gap:8px;margin-top:6px">
-          <label class="checkbox"><input type="checkbox" value="W" class="colorChk" /> W</label>
-          <label class="checkbox"><input type="checkbox" value="U" class="colorChk" /> U</label>
-          <label class="checkbox"><input type="checkbox" value="B" class="colorChk" /> B</label>
-          <label class="checkbox"><input type="checkbox" value="R" class="colorChk" /> R</label>
-          <label class="checkbox"><input type="checkbox" value="G" class="colorChk" /> G</label>
-        </div>
-      </div>
-      <div style="min-width:220px">
-        <label class="small">Format legality</label>
-        <select id="formatSelect">
-          <option value="">Any</option>
-          <option value="standard">Standard</option>
-          <option value="pioneer">Pioneer</option>
-          <option value="modern">Modern</option>
-          <option value="legacy">Legacy</option>
-          <option value="vintage">Vintage</option>
-          <option value="commander">Commander</option>
-          <option value="pauper">Pauper</option>
-          <option value="historic">Historic</option>
-          <option value="brawl">Brawl</option>
-        </select>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-      <button id="applyFilters" class="alt">Apply Filters</button>
-      <button id="clearFilters">Clear Filters</button>
-    </div>
-  </div>
 
-  <div id="results" aria-live="polite" style="margin-top:12px">
-    <div class="muted">Search to see results.</div>
-  </div>
-</main>
+    <div id="filterPanel" style="display:none; margin-top: 8px;">
+      <label>Type:
+        <input type="text" id="typeFilter" placeholder="e.g., Creature">
+      </label>
+      <label>Supertype:
+        <input type="text" id="supertypeFilter" placeholder="e.g., Legendary">
+      </label>
+      <label>Subtype:
+        <input type="text" id="subtypeFilter" placeholder="e.g., Elf">
+      </label>
+      <label>Colors (comma separated, e.g., W,U):
+        <input type="text" id="colorFilter" placeholder="W,U,R,B,G">
+      </label>
+    </div>
 
-<aside class="col right">
-  <div>
+    <div id="results"><div class="muted">Search to see results</div></div>
+
+    <div id="preview">
+      <strong id="previewName">Preview</strong>
+      <div id="previewType" class="muted"></div>
+      <img id="previewImg" src="" alt="">
+    </div>
+  </main>
+
+  <aside class="col right">
     <strong>Your Deck</strong>
-    <div class="muted">Deck display with card counts</div>
-    <div id="deckArea" class="deck-list" aria-live="polite"></div>
+    <div class="muted" style="margin-bottom: 4px;">Deck list with counts</div>
+    <div id="deckList" class="deck-list"></div>
 
-    <strong style="margin-top:12px; display:block;">Untap-style List</strong>
-    <div class="muted">Plain list suitable for import/export</div>
-    <textarea id="deckText" placeholder="Your deck list will appear here..."></textarea>
-    <div style="display:flex;gap:8px;margin-top:6px">
-      <button id="exportBtn">Export List</button>
-      <button id="importBtn" class="alt">Import List</button>
-    </div>
-  </div>
-</aside>
+    <strong style="margin-top:12px; display:block;">Import / Export List</strong>
+    <div class="muted" style="margin-bottom: 4px;">Plain list (Untap-style)</div>
+    <textarea id="importExportArea" style="width:100%; height:150px;"></textarea>
+  </aside>
 </div>
 
 <script>
-let deckMap={};
-let lastPage=1;
+const deckMap = {};
+let deckOrder = [];
 
-// Fetch cards
-async function fetchCards(query,page=1){
-  const res=await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&page=${page}`);
-  return res.json();
+function updateDeckList() {
+  const deckDiv = document.getElementById('deckList');
+  deckDiv.innerHTML = '';
+  let total = 0;
+  deckOrder.forEach(id=>{
+    const e = deckMap[id];
+    total += e.count;
+    const row = document.createElement('div');
+    row.className = 'deck-row';
+    row.innerHTML = `<span>${e.count} x ${e.card.name} (${e.card.type_line||''})</span>`;
+    const btns = document.createElement('div');
+    const plus = document.createElement('button'); plus.textContent = '+'; plus.onclick = ()=> addToDeck(e.card);
+    const minus = document.createElement('button'); minus.textContent = '−'; minus.onclick = ()=> removeOne(id);
+    btns.appendChild(plus); btns.appendChild(minus);
+    row.appendChild(btns);
+    deckDiv.appendChild(row);
+  });
+  updateImportExport();
 }
 
-// Filters
-function gatherFilters(){
-  return {
-    supertypes:Array.from(document.querySelectorAll('.suptype:checked')).map(i=>i.value),
-    type:document.getElementById('typeSelect').value,
-    subtype:document.getElementById('subtypeInput').value.trim(),
-    colors:Array.from(document.querySelectorAll('.colorChk:checked')).map(c=>c.value),
-    format:document.getElementById('formatSelect').value
-  };
+function updateImportExport() {
+  const text = deckOrder.map(id=>{
+    const e = deckMap[id];
+    return e.count + ' ' + e.card.name;
+  }).join('\n');
+  document.getElementById('importExportArea').value = text;
 }
 
-function cardMatchesFilters(card,f){
-  if(f.supertypes.length&&!f.supertypes.every(s=>(card.type_line||'').toLowerCase().includes(s.toLowerCase()))) return false;
-  if(f.type&&!(card.type_line||'').toLowerCase().includes(f.type.toLowerCase())) return false;
-  if(f.subtype&&!((card.type_line?.split('—')[1]||'').toLowerCase().includes(f.subtype.toLowerCase()))) return false;
-  if(f.colors.length&&!f.colors.every(c=>(card.colors||[]).includes(c))) return false;
-  if(f.format&&card.legalities?.[f.format]!=='legal') return false;
+function addToDeck(card) {
+  const format = document.getElementById('formatSelect').value;
+  const id = card.id || ('local:' + card.name);
+  if (!deckMap[id]) { deckMap[id] = { card: card, count: 0 }; deckOrder.push(id); }
+  let cur = deckMap[id].count;
+  // Rules enforcement
+  if (format === 'standard' && cur >= 4) { alert('Standard: max 4 copies'); return; }
+  if (format === 'commander' && cur >= 1 && !isBasicLand(card)) { alert('Commander: only 1 copy per card'); return; }
+  if (format === 'standard' && totalDeckCount() >= 60) { alert('Standard: max 60 cards'); return; }
+  if (format === 'commander' && totalDeckCount() >= 100) { alert('Commander: deck full'); return; }
+  deckMap[id].count++;
+  updateDeckList();
+}
+
+function removeOne(id) {
+  if (!deckMap[id]) return;
+  deckMap[id].count--;
+  if (deckMap[id].count <=0) { delete deckMap[id]; deckOrder = deckOrder.filter(x=>x!==id); }
+  updateDeckList();
+}
+
+function totalDeckCount() {
+  return deckOrder.reduce((sum,id)=>sum + deckMap[id].count,0);
+}
+
+function isBasicLand(card) {
+  return (card.type_line || '').toLowerCase().includes('basic land');
+}
+
+// Search & Filters
+async function searchCards() {
+  const q = document.getElementById('searchInput').value.trim() || 'a';
+  let url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(q)}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const results = (data.data || []).filter(c=>filterCard(c));
+    renderSearchResults(results);
+  } catch(e){ console.error(e); alert('Search failed'); }
+}
+
+function filterCard(c) {
+  const typeF = document.getElementById('typeFilter').value.trim().toLowerCase();
+  const superF = document.getElementById('supertypeFilter').value.trim().toLowerCase();
+  const subF = document.getElementById('subtypeFilter').value.trim().toLowerCase();
+  const colors = document.getElementById('colorFilter').value.trim().toUpperCase().split(',').filter(Boolean);
+  if (typeF && !(c.type_line||'').toLowerCase().includes(typeF)) return false;
+  if (superF && !(c.type_line||'').toLowerCase().includes(superF)) return false;
+  if (subF && !((c.type_line||'').split('—')[1]||'').toLowerCase().includes(subF)) return false;
+  if (colors.length) {
+    const cardColors = c.colors || [];
+    if (!colors.every(ch=>cardColors.includes(ch))) return false;
+  }
   return true;
 }
 
-// Render search results
-function renderResults(cards){
-  const resultsDiv=document.getElementById('results'); resultsDiv.innerHTML='';
-  if(!cards.length){ resultsDiv.innerHTML='<div class="muted">No results.</div>'; return; }
-  cards.slice(0,50).forEach(card=>{
-    const row=document.createElement('div'); row.className='result';
-    const thumb=document.createElement('div'); thumb.className='thumb'; thumb.textContent=(card.set||'').toUpperCase();
-    const meta=document.createElement('div'); meta.className='meta';
-    meta.innerHTML=`<strong>${card.name}</strong><small>${card.type_line||''}</small>`;
-    const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='6px';
-    const addBtn=document.createElement('button'); addBtn.textContent='Add';
-    addBtn.onclick=()=> addToDeck(card);
-    actions.appendChild(addBtn);
+function renderSearchResults(entries) {
+  const div = document.getElementById('results');
+  div.innerHTML = '';
+  if (!entries.length) { div.innerHTML = '<div class="muted">No results</div>'; return; }
+  entries.forEach(c=>{
+    const row = document.createElement('div'); row.className='result';
+    const thumb = document.createElement('div'); thumb.className='thumb'; thumb.textContent = (c.set||'').toUpperCase();
+    const meta = document.createElement('div'); meta.className='meta'; meta.innerHTML = `<strong>${c.name}</strong><small>${c.type_line||''}</small>`;
+    const actions = document.createElement('div');
+    const previewBtn = document.createElement('button'); previewBtn.textContent='Preview'; previewBtn.onclick = ()=> showPreview(c);
+    const addBtn = document.createElement('button'); addBtn.textContent='Add'; addBtn.onclick = ()=> addToDeck(c);
+    actions.appendChild(previewBtn); actions.appendChild(addBtn);
     row.appendChild(thumb); row.appendChild(meta); row.appendChild(actions);
-    resultsDiv.appendChild(row);
+    div.appendChild(row);
   });
 }
 
-// Deck functions
-function renderDeck(){
-  const deckArea=document.getElementById('deckArea'); deckArea.innerHTML='';
-  for(const name in deckMap){
-    const row=document.createElement('div'); row.className='deck-row';
-    row.textContent=`${deckMap[name].count} ${name}`;
-    deckArea.appendChild(row);
-  }
-  updateDeckText();
+function showPreview(c) {
+  document.getElementById('previewName').textContent = c.name;
+  document.getElementById('previewType').textContent = c.type_line || '';
+  let img = c.image_uris?.normal || c.image_uris?.large || (c.card_faces && c.card_faces[0].image_uris?.normal) || '';
+  const imgEl = document.getElementById('previewImg');
+  if(img) { imgEl.src = img; imgEl.style.display='block'; } else { imgEl.style.display='none'; }
 }
 
-function updateDeckText(){
-  const textarea=document.getElementById('deckText');
-  textarea.value=Object.values(deckMap).map(d=>`${d.count} ${d.card.name}`).join('\n');
-}
-
-function addToDeck(card){
-  const name=card.name;
-  if(!deckMap[name]) deckMap[name]={count:0,card};
-  deckMap[name].count++;
-  renderDeck();
-}
-
-// Search
-async function doSearch(query){
-  document.getElementById('results').innerHTML='<div class="muted">Searching…</div>';
-  try{
-    const data=await fetchCards(query,lastPage);
-    const f=gatherFilters();
-    const filtered=(data.data||[]).filter(c=>cardMatchesFilters(c,f));
-    renderResults(filtered);
-  }catch(e){ document.getElementById('results').innerHTML='<div class="muted">Error fetching cards.</div>'; console.error(e);}
-}
-
-// Events
-document.getElementById('searchBtn').onclick=()=>{ lastPage=1; doSearch(document.getElementById('q').value.trim()||'a'); };
-document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ lastPage=1; doSearch(document.getElementById('q').value.trim()||'a'); }});
-document.getElementById('toggleFilters').onclick=()=>{
-  const panel=document.getElementById('filterPanel');
-  panel.style.display=panel.style.display==='none'?'block':'none';
-  document.getElementById('toggleFilters').textContent=panel.style.display==='none'?'Show Advanced Filters':'Hide Advanced Filters';
-};
-document.getElementById('applyFilters').onclick=()=>{ lastPage=1; doSearch(document.getElementById('q').value.trim()||'a'); };
-document.getElementById('clearFilters').onclick=()=>{
-  document.querySelectorAll('.suptype').forEach(i=>i.checked=false);
-  document.getElementById('typeSelect').value='';
-  document.getElementById('subtypeInput').value='';
-  document.querySelectorAll('.colorChk').forEach(i=>i.checked=false);
-  document.getElementById('formatSelect').value='';
-};
-
-// Import/Export
-document.getElementById('exportBtn').onclick=()=>{
-  const blob=new Blob([document.getElementById('deckText').value],{type:'text/plain'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='deck.txt'; a.click(); URL.revokeObjectURL(a.href);
-};
-
-document.getElementById('importBtn').onclick=()=>{
-  const raw=prompt('Paste plain deck list (e.g., "4 Lightning Bolt")');
-  if(!raw) return;
-  deckMap={};
-  raw.split('\n').forEach(line=>{
-    const m=line.trim().match(/^(\d+)\s+(.+)$/);
-    if(m){ const count=parseInt(m[1]); const name=m[2]; deckMap[name]={count,count,card:{name}}; }
-  });
-  renderDeck();
-};
+// Event Listeners
+document.getElementById('searchBtn').addEventListener('click', searchCards);
+document.getElementById('searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') searchCards(); });
+document.getElementById('toggleFilters').addEventListener('click', ()=>{
+  const f = document.getElementById('filterPanel');
+  f.style.display = f.style.display==='none'?'block':'none';
+});
 </script>
+
 </body>
 </html>
